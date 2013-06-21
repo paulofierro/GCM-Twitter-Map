@@ -1,0 +1,215 @@
+<!doctype html>
+<html>
+<head>
+	<title>Dissecting Twitter Mobile Users on Grand Cayman</title>
+	<style>
+		body {
+			font-family: Georgia, 'Times new Roman', Times, serif;
+			line-height: 1.65em;
+		}
+		.device {
+			width: 25%;
+			float: left;
+			height: 2em;
+			color: #fff;
+			text-align: center;
+			line-height: 2em;
+			text-shadow: 0px -1px #000000;
+		}
+		#legend, #devices, #summary {
+			width: 100%;
+			height: 100%;
+			display: none;
+			clear: both;
+		}
+		#summary {
+			padding-top: 2em;
+		}
+		h1 {
+			font-family: 'Myriad Pro', 'Lucida Grande', 'Lucida Sans Unicode', 'Lucida Sans', Geneva, Verdana, sans-serif;
+		}
+		h1, p {
+			text-align: center;
+		}
+		.description p {
+			text-align: left;
+			margin-left: 15%;
+			margin-right: 15%;
+		}
+		button {
+			width: 25%;
+			height: 3em;
+		}
+		#ios {
+			background-color: #ff0000;
+		}
+		#android {
+			background-color: #00fca8;
+		}
+		#blackberry {
+			background-color: #9045d2;
+		}
+		#other {
+			background-color: #85548b;
+		}
+	</style>
+</head>
+<body>
+	<h1>Dissecting Twitter Mobile Users on GCM</h1>
+	<div class="description">
+		<p>This is a completely non-scientific Javascript "experiment" to analyse the mobile users <a href="http://www.mapbox.com/labs/twitter-gnip/brands/#14/19.3095/-81.3308" target="_blank">as mapped out by Twitter and GNIP</a>. First of all we created a <a href="gcm.png" target="_blank">a composite of the map tiles</a> in Photoshop and its this image we go through to find what devices are most prevalent.</p>
+		<p>When you look at that image at first (zoomed in) it seems that there are plenty of iOS devices on island. This may be because red on black offers the highest contrast because as you will see, when compared to the other pixels there is far less than we initially thought.</p>
+	</div>
+	<p><button id="btn" onclick="javascript:start();">Start</button></p>
+	<div id="legend">
+		<div id="ios" 			class="device">iOS</div>
+		<div id="android" 		class="device">Android</div>
+		<div id="blackberry" 	class="device">BlackBerry</div>
+		<div id="other" 		class="device">Other</div>
+	</div>
+	<div id="devices">
+	</div>
+	<div id="summary">
+		<h1>Summary</h1>
+		<div class="description">
+			<p>Here you can see what has been classified as what kind of device. There are false positives as BlackBerry and Other devices have very similar colours. This is by no means perfect but its still kind of interesting.</p>
+			<p>There are a total of 6,961 devices, which is far less than the 22,000 reported mobile users on Facebook (visible via their "create an ad" feature) which shows just how much less popular Twitter appears to be.</p>
+		</div>
+	</div>
+
+	<script type="text/javascript">
+
+		const boxDimensions = '10px';
+
+		var devices = {'ios':[], 'android':[], 'blackberry':[], 'unclassified':[]};
+		var total 	= 0;
+
+		function start() {
+			var btn = document.getElementById('btn');
+			btn.innerHTML = 'Running...';
+			btn.disabled = true;
+
+			var image = new Image();
+			image.src = 'gcm.png';
+			image.onload = function() {
+				var canvas 		= document.createElement('canvas');
+				canvas.width  	= image.width;
+				canvas.height 	= image.height;
+
+				var context = canvas.getContext('2d');
+				context.drawImage(image, 0, 0);
+
+				var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+
+				for (var x = 0; x < canvas.width; x++) {
+					for (var y = 0; y < canvas.height; y++) {
+						// Now you can access pixel data from imageData.data.
+						// It's a one-dimensional array of RGBA values.
+						// Here's an example of how to get a pixel's color at (x,y)
+						var index 	= (y*imageData.width + x) * 4;
+						var red 	= imageData.data[index];
+						var green 	= imageData.data[index + 1];
+						var blue 	= imageData.data[index + 2];
+						var alpha 	= imageData.data[index + 3];
+
+						// We don't care about black pixels
+						if ((red != 0 && green != 0 && blue != 0) && (red != green && red != blue)) {
+							total++;
+							// Otherwise we would have 7,914,236 objects. Now we have a more manageable 191,132.
+							// If we also ignore pixels that are grayscale we only have 6,961
+							drawBox(red, green, blue);
+						}
+					}
+				}
+				showResults();
+			}
+		}
+
+		function showResults() {
+			// Show that we're done and the results
+			btn.style.display = 'none';
+			document.getElementById('legend').style.display  = 'block';
+			document.getElementById('devices').style.display = 'block';
+			document.getElementById('summary').style.display = 'block';
+
+			for(var key in devices) {
+				
+				// Create the container div
+				var div = document.createElement('div');
+				div.style.clear = 'both';
+				div.style.paddingTop = '10px';
+				
+				// Add the header text
+				var p = document.createElement('p');
+				div.appendChild(p);
+
+				var list = devices[key];
+				for(var i=0; i < list.length; i++) {
+					var item = list[i];
+					var box = makeBox();
+					box.style.backgroundColor = 'rgb('+item.r+','+item.g+','+item.b+')';
+					div.appendChild(box);
+				}
+
+				var percentage = Math.floor(list.length/total * 100);
+				var name = 'unclassified';
+				switch(key) {
+					case 'ios': 			name = 'iOS'; break;
+					case 'android': 		name = 'Android'; break;
+					case 'blackberry': 	name = 'BlackBerry'; break;
+				}
+				p.appendChild(document.createTextNode('These are considered ' + name + ' devices (' + list.length + ') - ' + percentage + '%'));
+
+				document.getElementById('summary').appendChild(div);
+			}
+		}
+
+		function makeBox() {
+			var box = document.createElement('div');
+			box.style.width 	= boxDimensions;
+			box.style.height 	= boxDimensions;
+			box.style.float 	= 'left';
+			return box;
+		}
+
+		function drawBox(r, g, b) {
+			var box = makeBox();
+			var obj = {'r':r, 'g':g, 'b':b};
+			
+			var hasBeenClassified = false;
+
+			if (isRed(r,g,b)) {
+				devices['ios'].push(obj);
+				hasBeenClassified = true;
+			}
+			else if (isGreen(r,g,b)) {
+				devices['android'].push(obj);
+				hasBeenClassified = true;
+			}
+			else if (isPurple(r,g,b)) {
+				devices['blackberry'].push(obj);
+				hasBeenClassified = true;
+			}
+			else {
+				devices['unclassified'].push(obj);
+			}
+			
+			box.style.backgroundColor = 'rgb('+r+','+g+','+b+')';
+			document.getElementById('devices').appendChild(box);
+		}
+
+		/* Very rough helper methods */
+
+		function isRed(r,g,b) {
+			return (r > 50 && g > 0 && b > 0 && b < 110 && r > g && r > b);
+		}
+		function isGreen(r,g,b) {
+			return (g > 40 && r > 0 && b > 0 && g > r && g > b);
+		}
+
+		function isPurple(r,g,b) {
+			return ((r > 130 && g > 0 && g < 70 && b > 130) || (r > 30 && g < 35 && b > 33));
+		}
+	</script>
+</body>
+</html>
