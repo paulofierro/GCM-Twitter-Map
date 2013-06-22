@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
 <head>
-	<title>Dissecting Twitter Mobile Users on Grand Cayman</title>
+	<title>Dissecting Twitter Mobile Users</title>
 	<style>
 		body {
 			font-family: Georgia, 'Times new Roman', Times, serif;
@@ -28,7 +28,7 @@
 		h1 {
 			font-family: 'Myriad Pro', 'Lucida Grande', 'Lucida Sans Unicode', 'Lucida Sans', Geneva, Verdana, sans-serif;
 		}
-		h1, p {
+		h1, p, form {
 			text-align: center;
 		}
 		.description p {
@@ -52,14 +52,24 @@
 		#other {
 			background-color: #85548b;
 		}
+		.size {
+			font-size: 0.85em;
+			color: #999;
+		}
 	</style>
 </head>
 <body>
-	<h1>Dissecting Twitter Mobile Users on GCM</h1>
+	<h1>Dissecting Twitter Mobile Users</h1>
 	<div class="description">
-		<p>This is a completely non-scientific Javascript "experiment" to analyse the mobile users <a href="http://www.mapbox.com/labs/twitter-gnip/brands/#14/19.3095/-81.3308" target="_blank">as mapped out by Twitter and GNIP</a>. First of all we created a <a href="gcm.png" target="_blank">a composite of the map tiles</a> in Photoshop and its this image we go through to find what devices are most prevalent. This page and the image are <a href="https://github.com/paulofierro/GCM-Twitter-Map/">both available on Github</a>.</p>
-		<p>When you look at that image at first (zoomed in) it seems that there are plenty of iOS devices on island. This may be because red on black offers the highest contrast because as you will see, when compared to the other pixels there is far less than we initially thought.</p>
+		<p>This is a completely non-scientific Javascript "experiment" to analyse the mobile users <a href="http://www.mapbox.com/labs/twitter-gnip/brands/#14/19.3095/-81.3308" target="_blank">as mapped out by Twitter and GNIP</a>. First of all we created a a composite of the map tiles in Photoshop for <a href="gcm.png" target="_blank">Grand Cayman</a> and <a href="barbados.png" target="_blank">Barbados</a> and its these images we analyse to find what devices are most prevalent. This page and the images are <a href="https://github.com/paulofierro/GCM-Twitter-Map/">available on Github</a>.</p>
+		<p>When you look at the image of Grand Cayman at first (zoomed in) it seems that there are plenty of iOS devices on island. This may be because red on black offers the highest contrast because as you will see, when compared to the other pixels there is far less than we initially thought.</p>
+
+		<form id="form">
+			<input type="radio" name="country" value="gcm.png" checked="checked">Grand Cayman <span class="size">(387KB)</span>
+			<input type="radio" name="country" value="barbados.png">Barbados <span class="size">(1.1MB)</span>
+		</form>
 	</div>
+
 	<p><button id="btn" onclick="javascript:start();">Start</button></p>
 	<div id="legend">
 		<div id="ios" 			class="device">iOS</div>
@@ -73,25 +83,39 @@
 		<h1>Summary</h1>
 		<div class="description">
 			<p>Here you can see what has been classified as what kind of device. There are false positives as BlackBerry and Other devices have very similar colours. This is by no means perfect but its still kind of interesting.</p>
-			<p>There are a total of 6,961 devices, which is far less than the 22,000 reported mobile users on Facebook (visible via their "create an ad" feature) which shows just how much less popular Twitter appears to be.</p>
 		</div>
 	</div>
 
 	<script type="text/javascript">
 
-		const boxDimensions = '10px';
-
-		var devices = {'ios':[], 'android':[], 'blackberry':[], 'unclassified':[]};
+		var devices = {};
 		var total 	= 0;
+
+		function getCountry() {
+			var countries = document.getElementsByName('country');
+			for(var i = 0; i < countries.length; i++) {
+				var radio = countries[i];
+				if(radio.checked) {
+					return radio.value;
+				}
+			}
+			return '';
+		}
+
+		function getBoxSize() {
+			if(getCountry() == 'gcm.png') return '10px';
+			return '4px';
+		}
 
 		function start() {
 			var btn = document.getElementById('btn');
-			btn.innerHTML = 'Running...';
+			btn.innerHTML = 'Loading image...';
 			btn.disabled = true;
-			
+
 			var image = new Image();
-			image.src = 'gcm.png';
+			image.src = getCountry();
 			image.onload = function() {
+				btn.innerHTML 	= 'Running...';
 				var canvas 		= document.createElement('canvas');
 				canvas.width  	= image.width;
 				canvas.height 	= image.height;
@@ -100,6 +124,9 @@
 				context.drawImage(image, 0, 0);
 				
 				var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+
+				// Reset the data object
+				devices = {'ios':[], 'android':[], 'blackberry':[], 'unclassified':[]};
 
 				for (var x = 0; x < canvas.width; x++) {
 					for (var y = 0; y < canvas.height; y++) {
@@ -128,9 +155,14 @@
 		function showResults() {
 			// Show that we're done and the results
 			btn.style.display = 'none';
+			document.getElementById('form').style.display = 'none';
+
 			document.getElementById('legend').style.display  = 'block';
 			document.getElementById('devices').style.display = 'block';
 			document.getElementById('summary').style.display = 'block';
+
+			// Add the totals text
+			document.getElementById('summary').children[1].children[0].appendChild(document.createTextNode(' There are a total of ' + total + ' tweets.'))
 
 			for(var key in devices) {
 				
@@ -154,8 +186,8 @@
 				var percentage = Math.floor(list.length/total * 100);
 				var name = 'unclassified';
 				switch(key) {
-					case 'ios': 			name = 'iOS'; break;
-					case 'android': 		name = 'Android'; break;
+					case 'ios': 		name = 'iOS'; break;
+					case 'android': 	name = 'Android'; break;
 					case 'blackberry': 	name = 'BlackBerry'; break;
 				}
 				p.appendChild(document.createTextNode('These are considered ' + name + ' devices (' + list.length + ') - ' + percentage + '%'));
@@ -166,8 +198,8 @@
 
 		function makeBox() {
 			var box = document.createElement('div');
-			box.style.width 	= boxDimensions;
-			box.style.height 	= boxDimensions;
+			box.style.width 	= getBoxSize();
+			box.style.height 	= getBoxSize();
 			box.style.float 	= 'left';
 			return box;
 		}
