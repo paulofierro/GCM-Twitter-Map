@@ -61,8 +61,10 @@
 <body>
 	<h1>Dissecting Twitter Mobile Users</h1>
 	<div class="description">
-		<p>This is a completely non-scientific Javascript "experiment" to analyse the mobile users <a href="http://www.mapbox.com/labs/twitter-gnip/brands/#14/19.3095/-81.3308" target="_blank">as mapped out by Twitter and GNIP</a>. First of all we created a a composite of the map tiles in Photoshop for <a href="gcm.png" target="_blank">Grand Cayman</a> and <a href="barbados.png" target="_blank">Barbados</a> and its these images we analyse to find what devices are most prevalent. This page and the images are <a href="https://github.com/paulofierro/GCM-Twitter-Map/">available on Github</a>.</p>
-		<p>When you look at the image of Grand Cayman at first (zoomed in) it seems that there are plenty of iOS devices on island. This may be because red on black offers the highest contrast because as you will see, when compared to the other pixels there is far less than we initially thought.</p>
+		<p>This is a completely non-scientific Javascript "experiment" to analyse the mobile users <a href="http://www.mapbox.com/labs/twitter-gnip/brands/#14/19.3095/-81.3308" target="_blank">as mapped out by Twitter and GNIP</a>. First of all we created a a composite of the map tiles in Photoshop for <a href="gcm.png" target="_blank">Grand Cayman</a> and <a href="barbados.png" target="_blank">Barbados</a> and its these images we analyse to find what devices are most prevalent. We go through every pixel ignoring those that are black or grayscale. The rest are run through basic color analysis methods to try to categorise the device type.</p>
+		<p>This page and the images are <a href="https://github.com/paulofierro/GCM-Twitter-Map/" target="_blank">available on Github</a>.</p>
+		<p>When you look at <a href="gcm.png" target="_blank">the image of Grand Cayman</a> at first (zoomed in) it seems that there are plenty of iOS devices on island. This may be because red on black offers the highest contrast because as you will see, when compared to the other pixels there is far less than we initially thought.</p>
+		<p>Questions or comments? Hit me up <a href="http://twitter.com/plo" target="_blank">on Twitter</a>.</p>
 
 		<form id="form">
 			<input type="radio" name="country" value="gcm.png" checked="checked">Grand Cayman <span class="size">(387KB)</span>
